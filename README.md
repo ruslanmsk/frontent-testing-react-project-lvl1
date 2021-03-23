@@ -1,2 +1,3 @@
 ### Hexlet tests and linter status:
 [![Actions Status](https://github.com/ruslanmsk/frontent-testing-react-project-lvl1/workflows/hexlet-check/badge.svg)](https://github.com/ruslanmsk/frontent-testing-react-project-lvl1/actions)
+[![LINT](https://github.com/ruslanmsk/frontent-testing-react-project-lvl1/actions/workflows/lint.yml/badge.svg)](https://github.com/ruslanmsk/frontent-testing-react-project-lvl1/actions/workflows/lint.yml)
