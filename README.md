@@ -12,3 +12,7 @@
 ## Download images
 
 [![asciicast](https://asciinema.org/a/M7Hr4hOulBhidj3Gpym8z2fn9.svg)](https://asciinema.org/a/M7Hr4hOulBhidj3Gpym8z2fn9)
+
+## Download resourses 
+
+[![asciicast](https://asciinema.org/a/GRp5VsdeaHtol6OJKzOGKgcFG.svg)](https://asciinema.org/a/GRp5VsdeaHtol6OJKzOGKgcFG)
