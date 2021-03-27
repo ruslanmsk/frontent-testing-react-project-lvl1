@@ -11,8 +11,9 @@ program
   .description('Loades html page from url and save it locally')
   .helpOption('-h, --help', 'output usage information')
   .arguments('<url>')
-  .action((url, options) => {
-    loadPage(url, options.output);
+  .action(async (url, options) => {
+    const destinationPath = await loadPage(url, options.output);
+    console.log(destinationPath);
   })
   .option('--output [directory]', 'output directory', process.cwd());
 
