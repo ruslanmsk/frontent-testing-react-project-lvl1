@@ -16,3 +16,7 @@
 ## Download resourses 
 
 [![asciicast](https://asciinema.org/a/GRp5VsdeaHtol6OJKzOGKgcFG.svg)](https://asciinema.org/a/GRp5VsdeaHtol6OJKzOGKgcFG)
+
+## Debug info
+
+[![asciicast](https://asciinema.org/a/iseHJEd5VzSQWfXAHcrFNnuHF.svg)](https://asciinema.org/a/iseHJEd5VzSQWfXAHcrFNnuHF)

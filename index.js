@@ -4,6 +4,9 @@ import axios from 'axios';
 import fsp from 'fs/promises';
 import cheerio from 'cheerio';
 import path from 'path';
+import debug from 'debug';
+
+const log = debug('page-loader');
 
 function generateFileNameFolder(dir, url) {
   const localUrl = new URL(url);
@@ -35,6 +38,7 @@ function generateFileNameImg(url, src) {
 }
 
 async function downloadResource(url, savedir) {
+  log(url);
   try {
     const response = await axios({
       method: 'get',
