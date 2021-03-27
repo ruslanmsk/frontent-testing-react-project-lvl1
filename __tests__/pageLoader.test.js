@@ -22,54 +22,67 @@ const fullUrl = 'https://ru.hexlet.io/courses';
 const expectedFilename = 'ru-hexlet-io-courses.html';
 const expectedFolder = 'ru-hexlet-io-courses_files';
 
+const resources = [
+  {
+    format: 'png',
+    filename: 'ru-hexlet-io-assets-professions-nodejs',
+    url: '/assets/professions/nodejs.png',
+  },
+];
+
 let originalPageContent;
 let expectedPageContent;
-let expectedImageContent;
 let tmpDir;
 
 beforeAll(async () => {
   const fixtureOriginalPath = getFixturePath('original');
   const fixtureExpectedPath = getFixturePath('expected');
-  const fixtureImagePath = getFixturePath('node', 'png');
 
   originalPageContent = await readFile(fixtureOriginalPath);
   expectedPageContent = await readFile(fixtureExpectedPath);
-  expectedImageContent = await readFile(fixtureImagePath);
+
+  const promises = resources.map((recource) => {
+    const fixturePath = getFixturePath(recource.filename, recource.format);
+    return readFile(fixturePath).then((content) => recource.content = content);
+  });
+
+  await Promise.all(promises);
+
+  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
 
   nock.disableNetConnect();
 });
 
-beforeEach(async () => {
-  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
-});
-
 describe('page loader test', () => {
-  it('download image', async () => {
+  it('download page', async () => {
     nock(fullUrl)
       .persist()
       .get('')
-      .reply(200, originalPageContent)
-      .get('/assets/professions/nodejs.png')
-      .reply(200, expectedImageContent, {
-        'Content-Type': 'image/png',
-      });
+      .reply(200, originalPageContent);
 
-    const result = await loadPage(fullUrl, tmpDir);
-    const resultFilepath = `${tmpDir}/${expectedFilename}`;
+    resources.forEach((resource) => {
+      nock(fullUrl)
+        .get(resource.url)
+        .reply(200, resource.content);
+    });
+
+    const loaderFilepath = await loadPage(fullUrl, tmpDir);
+    const expectedFilepath = `${tmpDir}/${expectedFilename}`;
 
     expect(nock.isDone()).toBeTruthy();
-    expect(result).toBe(resultFilepath);
+    expect(loaderFilepath).toBe(expectedFilepath);
 
-    const resultContent = await readFile(resultFilepath);
-    expect(prettifyHtml(resultContent)).toBe(prettifyHtml(expectedPageContent));
+    const loaderContent = await readFile(loaderFilepath);
+    expect(prettifyHtml(loaderContent)).toBe(prettifyHtml(expectedPageContent));
+  });
 
-    const imgFilepath = `${tmpDir}/${expectedFolder}/ru-hexlet-io-assets-professions-nodejs.png`;
-
-    const resultContent2 = await readFile(imgFilepath);
-    expect(resultContent2).toBe(expectedImageContent);
+  test.each(resources)('download files', async (resource) => {
+    const fixtureFilepath = `${tmpDir}/${expectedFolder}/${resource.filename}.${resource.format}`;
+    const resultContent = await readFile(fixtureFilepath);
+    expect(resultContent).toBe(resource.content);
   });
 });
 
-afterAll(async () => {
-  await fsp.rmdir(tmpDir, { recursive: true });
-});
+// afterAll(async () => {
+//   await fsp.rmdir(tmpDir, { recursive: true });
+// });
