@@ -38,6 +38,11 @@ const resources = [
     filename: 'ru-hexlet-io-packs-js-runtime',
     url: 'https://ru.hexlet.io/packs/js/runtime.js',
   },
+  // {
+  //   format: 'html',
+  //   filename: 'ru-hexlet-io-courses',
+  //   url: 'https://ru.hexlet.io/courses.html',
+  // },
 ];
 
 let originalPageContent;

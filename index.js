@@ -8,27 +8,13 @@ import debug from 'debug';
 
 const log = debug('page-loader');
 
-function generateFileNameFolder(dir, url) {
-  const localUrl = new URL(url);
-  const urlWithoutProtocol = `${localUrl.host}${localUrl.pathname !== '/' ? localUrl.pathname : ''}`;
-  const foldername = `${dir}/${urlWithoutProtocol.replace(/\W/g, '-')}_files`;
-  return foldername;
-}
-
-function generateFileName(dir, url) {
-  const localUrl = new URL(url);
-  const urlWithoutHost = `${localUrl.host}${localUrl.pathname !== '/' ? localUrl.pathname : ''}`;
-  const filename = `${dir}/${urlWithoutHost.replace(/\W/g, '-')}.html`;
-  return filename;
-}
-
 function generateFileNameImg(url, src) {
   const localUrl = new URL(url);
   const srcUrl = new URL(src, url);
   const srcUrlArr = (srcUrl.host + srcUrl.pathname).split('.');
   srcUrlArr.splice(-1, 1);
   let srcUrlTrue = srcUrlArr.join('.');
-  const urlWithoutHost = `${localUrl.host}${localUrl.pathname !== '/' ? localUrl.pathname : ''}`;
+  const urlWithoutHost = `${localUrl.host}${localUrl.pathname}`;
   if (localUrl.pathname === src) {
     srcUrlTrue = (srcUrl.host + srcUrl.pathname);
   }
@@ -86,16 +72,20 @@ async function exctractResources(html, outputDirectory, url) {
   return $.html();
 }
 
-export default async function pageLoader(url, outputDirectory) {
-  const response = await axios.get(url);
+export default async function pageLoader(urlStr, outputDir) {
+  const url = new URL(urlStr);
+  const urlWithoutProtocol = `${url.host}${url.pathname}`;
+  const urlName = `${urlWithoutProtocol.replace(/\W/g, '-')}`;
 
-  const filesPath = generateFileNameFolder(outputDirectory, url);
-  await fsp.mkdir(filesPath, { recursive: true });
-  const resultHtml = await exctractResources(response.data, outputDirectory, url);
+  const folderPath = `${outputDir}/${urlName}_files`;
+  await fsp.mkdir(folderPath, { recursive: true });
 
-  const filename = generateFileName(outputDirectory, url);
-  await fsp.writeFile(filename, resultHtml);
-  return filename;
+  const response = await axios.get(url.href);
+  const resultHtml = await exctractResources(response.data, outputDir, urlStr);
+
+  const filePath = `${outputDir}/${urlName}.html`;
+  await fsp.writeFile(filePath, resultHtml);
+  return filePath;
 }
 
-pageLoader('https://ororo.tv', process.cwd());
+// pageLoader('https://ororo3.tv', process.cwd());
