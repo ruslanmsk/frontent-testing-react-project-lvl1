@@ -8,33 +8,19 @@ import debug from 'debug';
 
 const log = debug('page-loader');
 
-function generateFileNameImg(url, src) {
-  const localUrl = new URL(url);
+function generateFileName(url, src) {
   const srcUrl = new URL(src, url);
-  const srcUrlArr = (srcUrl.host + srcUrl.pathname).split('.');
-  srcUrlArr.splice(-1, 1);
-  let srcUrlTrue = srcUrlArr.join('.');
-  const urlWithoutHost = `${localUrl.host}${localUrl.pathname}`;
-  if (localUrl.pathname === src) {
-    srcUrlTrue = (srcUrl.host + srcUrl.pathname);
-  }
-  const extname = path.extname(src) || '.html';
-  const filename = `${urlWithoutHost.replace(/\W/g, '-')}_files/${srcUrlTrue.replace(/\W/g, '-')}${extname}`;
+  const { dir, name, ext } = path.parse(`${srcUrl.host}${srcUrl.pathname}`);
+  const urlWithoutProtocol = `${url.host}${url.pathname}`;
+  const extname = ext || '.html';
+  const filename = `${urlWithoutProtocol.replace(/\W/g, '-')}_files/${path.join(dir, name).replace(/\W/g, '-')}${extname}`;
   return filename;
 }
 
 async function downloadResource(url, savedir) {
   log(url);
-  try {
-    const response = await axios({
-      method: 'get',
-      url,
-      responseType: 'arraybuffer',
-    });
-    await fsp.writeFile(savedir, response.data);
-  } catch (err) {
-    console.log(err);
-  }
+  const response = await axios({ url, responseType: 'arraybuffer' });
+  await fsp.writeFile(savedir, response.data);
 }
 
 const resourceMapping = {
@@ -43,31 +29,27 @@ const resourceMapping = {
   script: 'src',
 };
 
-function replace(type, $, url, outputDirectory) {
-  const attr = resourceMapping[type];
-  const promises = Array.from($(type))
-    .filter((resource) => new URL(resource.attribs[attr], new URL(url).origin).href.startsWith(new URL(url).origin))
-    .filter((resource) => resource.attribs[attr])
-    // .filter((resource) => !/^(https?:)?\/\//g.test(resource.attribs[attr]))
-    .map(async (resource) => {
-      const attributeLink = resource.attribs[attr];
-      const filename = generateFileNameImg(url, attributeLink);
-      // eslint-disable-next-line no-param-reassign
-      resource.attribs[attr] = filename;
-      return downloadResource(url + attributeLink, `${outputDirectory}/${filename}`);
-    });
-
-  return promises;
-}
-
 async function exctractResources(html, outputDirectory, url) {
-  const $ = cheerio.load(html);
+  const $ = cheerio.load(html, { decodeEntities: true });
 
-  const promises = replace('img', $, url, outputDirectory);
-  const promises2 = replace('link', $, url, outputDirectory);
-  const promises3 = replace('script', $, url, outputDirectory);
+  const promises = [];
 
-  await Promise.all([...promises, ...promises2, ...promises3]);
+  Object.entries(resourceMapping).forEach(([type, attr]) => {
+    const promise = Array.from($(type))
+      .map((resource) => $(resource))
+      .filter((resource) => resource.attr(attr))
+      .filter((resource) => new URL(resource.attr(attr), url.origin).origin === url.origin)
+      .map(async (resource) => {
+        const attributeLink = resource.attr(attr);
+        const filename = generateFileName(url, attributeLink);
+        resource.attr(attr, filename);
+        return downloadResource(new URL(attributeLink, url.origin).href, `${outputDirectory}/${filename}`);
+      });
+
+    promises.push(promise);
+  });
+
+  await Promise.all(promises);
 
   return $.html();
 }
@@ -81,7 +63,7 @@ export default async function pageLoader(urlStr, outputDir) {
   await fsp.mkdir(folderPath, { recursive: true });
 
   const response = await axios.get(url.href);
-  const resultHtml = await exctractResources(response.data, outputDir, urlStr);
+  const resultHtml = await exctractResources(response.data, outputDir, url);
 
   const filePath = `${outputDir}/${urlName}.html`;
   await fsp.writeFile(filePath, resultHtml);

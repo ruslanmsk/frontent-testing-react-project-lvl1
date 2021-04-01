@@ -10,15 +10,12 @@ import loadPage from '../index.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-function getFixturePath(filename, extenstion = 'html') {
-  return path.join(__dirname, '..', '__fixtures__', `${filename}.${extenstion}`);
-}
+const getFixturePath = (filename, extenstion = 'html') => path.join(__dirname, '..', '__fixtures__', `${filename}.${extenstion}`);
+const readFile = (filepath) => fsp.readFile(filepath, 'utf-8');
 
-function readFile(filepath) {
-  return fsp.readFile(filepath, 'utf-8');
-}
-
-const fullUrl = 'https://ru.hexlet.io/courses';
+const siteUrl = 'https://ru.hexlet.io';
+const sitePath = '/courses';
+const fullUrl = `${siteUrl}${sitePath}`;
 const expectedFilename = 'ru-hexlet-io-courses.html';
 const expectedFolder = 'ru-hexlet-io-courses_files';
 
@@ -36,13 +33,13 @@ const resources = [
   {
     format: 'js',
     filename: 'ru-hexlet-io-packs-js-runtime',
-    url: 'https://ru.hexlet.io/packs/js/runtime.js',
+    url: '/packs/js/runtime.js',
   },
-  // {
-  //   format: 'html',
-  //   filename: 'ru-hexlet-io-courses',
-  //   url: 'https://ru.hexlet.io/courses.html',
-  // },
+  {
+    format: 'html',
+    filename: 'ru-hexlet-io-courses',
+    url: '/courses',
+  },
 ];
 
 let originalPageContent;
@@ -56,9 +53,12 @@ beforeAll(async () => {
   originalPageContent = await readFile(fixtureOriginalPath);
   expectedPageContent = await readFile(fixtureExpectedPath);
 
-  const promises = resources.map((recource) => {
-    const fixturePath = getFixturePath(recource.filename, recource.format);
-    return readFile(fixturePath).then((content) => recource.content = content);
+  const promises = resources.map((resource) => {
+    const fixturePath = getFixturePath(resource.filename, resource.format);
+    return readFile(fixturePath).then((content) => {
+      // eslint-disable-next-line no-param-reassign
+      resource.content = content;
+    });
   });
 
   await Promise.all(promises);
@@ -68,16 +68,14 @@ beforeAll(async () => {
   nock.disableNetConnect();
 });
 
-describe('page loader test', () => {
-  it('download page', async () => {
-    nock(fullUrl)
-      .persist()
-      .get('')
+describe('page loader', () => {
+  it('web page', async () => {
+    nock(siteUrl)
+      .get(sitePath)
       .reply(200, originalPageContent);
 
     resources.forEach((resource) => {
-      nock(fullUrl)
-        .persist()
+      nock(siteUrl)
         .get(resource.url)
         .reply(200, resource.content);
     });
@@ -85,20 +83,20 @@ describe('page loader test', () => {
     const loaderFilepath = await loadPage(fullUrl, tmpDir);
     const expectedFilepath = `${tmpDir}/${expectedFilename}`;
 
-    // expect(nock.isDone()).toBeTruthy();
+    expect(nock.isDone()).toBeTruthy();
     expect(loaderFilepath).toBe(expectedFilepath);
 
     const loaderContent = await readFile(loaderFilepath);
     expect(prettifyHtml(loaderContent)).toBe(prettifyHtml(expectedPageContent));
   });
 
-  test.each(resources)('download files', async (resource) => {
+  test.each(resources)('resource files', async (resource) => {
     const fixtureFilepath = `${tmpDir}/${expectedFolder}/${resource.filename}.${resource.format}`;
     const resultContent = await readFile(fixtureFilepath);
     expect(resultContent).toBe(resource.content);
   });
 });
 
-// afterAll(async () => {
-//   await fsp.rmdir(tmpDir, { recursive: true });
-// });
+afterAll(async () => {
+  await fsp.rmdir(tmpDir, { recursive: true });
+});

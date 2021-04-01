@@ -12,8 +12,13 @@ program
   .helpOption('-h, --help', 'output usage information')
   .arguments('<url>')
   .action(async (url, options) => {
-    const destinationPath = await loadPage(url, options.output);
-    console.log(destinationPath);
+    try {
+      const destinationPath = await loadPage(url, options.output);
+      console.log(destinationPath);
+    } catch (error) {
+      console.error(error.message);
+      process.exit(1);
+    }
   })
   .option('--output [directory]', 'output directory', process.cwd());
 
