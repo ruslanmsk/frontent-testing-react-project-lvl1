@@ -20,3 +20,7 @@
 ## Debug info
 
 [![asciicast](https://asciinema.org/a/iseHJEd5VzSQWfXAHcrFNnuHF.svg)](https://asciinema.org/a/iseHJEd5VzSQWfXAHcrFNnuHF)
+
+## Error url
+
+[![asciicast](https://asciinema.org/a/3xjwttmj3MnzdakwIY4MRets3.svg)](https://asciinema.org/a/3xjwttmj3MnzdakwIY4MRets3)
