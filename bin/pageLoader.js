@@ -20,6 +20,6 @@ program
       process.exit(1);
     }
   })
-  .option('--output [directory]', 'output directory', process.cwd());
+  .option('-o, --output [directory]', 'output directory', process.cwd());
 
 program.parse(process.argv);
