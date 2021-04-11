@@ -1,10 +1,9 @@
-// https://guides.hexlet.io/vscode-js-setup/
-
 import axios from 'axios';
 import fsp from 'fs/promises';
 import cheerio from 'cheerio';
 import path from 'path';
 import debug from 'debug';
+import process from 'process';
 
 const log = debug('page-loader');
 
@@ -54,12 +53,12 @@ async function exctractResources(html, outputDirectory, url) {
   return $.html();
 }
 
-export default async function pageLoader(urlStr, outputDir) {
+export default async function pageLoader(urlStr, outputDir = '') {
   const url = new URL(urlStr);
   const urlWithoutProtocol = `${url.host}${url.pathname}`;
-  const urlName = `${urlWithoutProtocol.replace(/\W/g, '-')}`;
+  const urlName = urlWithoutProtocol.replace(/\W/g, '-').replace(/-$/g, '');
 
-  const folderPath = `${outputDir}/${urlName}_files`;
+  const folderPath = path.resolve(process.cwd(), `${outputDir || '.'}/${urlName}_files`);
   await fsp.mkdir(folderPath, { recursive: true });
 
   const response = await axios.get(url.href);

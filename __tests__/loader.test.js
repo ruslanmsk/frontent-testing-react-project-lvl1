@@ -69,7 +69,7 @@ beforeAll(async () => {
 });
 
 describe('page loader', () => {
-  it('web page', async () => {
+  test('web page', async () => {
     nock(siteUrl)
       .get(sitePath)
       .reply(200, originalPageContent);
@@ -97,6 +97,6 @@ describe('page loader', () => {
   });
 });
 
-afterAll(async () => {
-  await fsp.rmdir(tmpDir, { recursive: true });
-});
+// afterAll(async () => {
+//   await fsp.rmdir(tmpDir, { recursive: true });
+// });

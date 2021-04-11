@@ -8,7 +8,7 @@ beforeAll(() => {
 });
 
 describe('errors test', () => {
-  it('http', async () => {
+  test('http', async () => {
     nock(url)
       .get('/')
       .replyWithError(`getaddrinfo ENOTFOUND ${url}`);
