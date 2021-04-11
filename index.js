@@ -12,7 +12,7 @@ function generateFileName(url, src) {
   const { dir, name, ext } = path.parse(`${srcUrl.host}${srcUrl.pathname}`);
   const urlWithoutProtocol = `${url.host}${url.pathname}`;
   const extname = ext || '.html';
-  const filename = `${urlWithoutProtocol.replace(/\W/g, '-')}_files/${path.join(dir, name).replace(/\W/g, '-')}${extname}`;
+  const filename = `${urlWithoutProtocol.replace(/\W/g, '-').replace(/-$/g, '')}_files/${path.join(dir, name).replace(/\W/g, '-')}${extname}`;
   return filename;
 }
 
@@ -42,7 +42,9 @@ async function exctractResources(html, outputDirectory, url) {
         const attributeLink = resource.attr(attr);
         const filename = generateFileName(url, attributeLink);
         resource.attr(attr, filename);
-        return downloadResource(new URL(attributeLink, url.origin).href, `${outputDirectory}/${filename}`);
+        return downloadResource(
+          new URL(attributeLink, url.origin).href, path.join(outputDirectory, filename),
+        );
       });
 
     promises.push(promise);
@@ -58,15 +60,16 @@ export default async function pageLoader(urlStr, outputDir = '') {
   const urlWithoutProtocol = `${url.host}${url.pathname}`;
   const urlName = urlWithoutProtocol.replace(/\W/g, '-').replace(/-$/g, '');
 
-  const folderPath = path.resolve(process.cwd(), `${outputDir || '.'}/${urlName}_files`);
-  await fsp.mkdir(folderPath, { recursive: true });
+  const fullOutputDir = path.resolve(process.cwd(), outputDir);
+  const fullFolderPath = path.join(fullOutputDir, `${urlName}_files`);
+  await fsp.mkdir(fullFolderPath, { recursive: true });
 
   const response = await axios.get(url.href);
-  const resultHtml = await exctractResources(response.data, outputDir, url);
+  const resultHtml = await exctractResources(response.data, fullOutputDir, url);
 
-  const filePath = `${outputDir}/${urlName}.html`;
+  const filePath = path.join(fullOutputDir, `${urlName}.html`);
   await fsp.writeFile(filePath, resultHtml);
   return filePath;
 }
 
-// pageLoader('https://ororo3.tv', process.cwd());
+// pageLoader('https://ororo.tv');
