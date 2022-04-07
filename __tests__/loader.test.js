@@ -97,16 +97,18 @@ describe('positive cases', () => {
   });
 });
 
-// describe('negative cases', () => {
-//   test('http', async () => {
-//     const url = 'https://mail.ru';
-//     nock(url)
-//       .get('/')
-//       .replyWithError(`getaddrinfo ENOTFOUND ${url}`);
+describe('negative cases', () => {
+  let tmpDir;
+  beforeEach(async () => {
+    tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  });
 
-//     return expect(loadPage(url)).rejects.toMatchObject({ message: `getaddrinfo ENOTFOUND ${url}` });
-//   });
-// });
+  test.each([404, 500])('%s error', async (code) => {
+    scope.get(`/${code}`).reply(code);
+    const url = new URL(`/${code}`, siteUrl).toString();
+    await expect(loadPage(url, tmpDir)).rejects.toThrow(`${code}`);
+  });
+});
 
 afterAll(async () => {
   nock.enableNetConnect();
