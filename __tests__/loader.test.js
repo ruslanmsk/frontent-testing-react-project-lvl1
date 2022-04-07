@@ -4,11 +4,7 @@ import os from 'os';
 import prettifyHtml from 'prettify-html';
 
 import nock from 'nock';
-import { fileURLToPath } from 'url';
 import loadPage from '../index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const getFixturePath = (filename, extenstion = 'html') => path.join(__dirname, '..', '__fixtures__', `${filename}.${extenstion}`);
 const readFile = (filepath) => fsp.readFile(filepath, 'utf-8');
