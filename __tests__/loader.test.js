@@ -41,7 +41,7 @@ const resources = [
 let originalPageContent;
 let expectedPageContent;
 
-const scope = nock(siteUrl);
+const scope = nock(siteUrl).persist();
 
 beforeAll(async () => {
   nock.disableNetConnect();
@@ -103,6 +103,14 @@ describe('negative cases', () => {
     scope.get(`/${code}`).reply(code);
     const url = new URL(`/${code}`, siteUrl).toString();
     await expect(loadPage(url, tmpDir)).rejects.toThrow(`${code}`);
+  });
+
+  test('file system error', async () => {
+    const rootDirPath = '/unknown';
+    await expect(loadPage(fullUrl.toString(), rootDirPath)).rejects.toThrow();
+
+    const filepath = getFixturePath(expectedFilename);
+    await expect(loadPage(fullUrl.toString(), filepath)).rejects.toThrow(/ENOENT/);
   });
 });
 
