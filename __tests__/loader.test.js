@@ -44,9 +44,12 @@ const resources = [
 
 let originalPageContent;
 let expectedPageContent;
-let tmpDir;
+
+const scope = nock(siteUrl);
 
 beforeAll(async () => {
+  nock.disableNetConnect();
+
   const fixtureOriginalPath = getFixturePath('original');
   const fixtureExpectedPath = getFixturePath('expected');
 
@@ -63,29 +66,26 @@ beforeAll(async () => {
 
   await Promise.all(promises);
 
-  tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+  scope
+    .get(sitePath)
+    .reply(200, originalPageContent);
 
-  nock.disableNetConnect();
+  resources.forEach((resource) => {
+    scope
+      .get(resource.url)
+      .reply(200, resource.content);
+  });
 });
 
-describe('page loader', () => {
+describe('positive cases', () => {
+  let tmpDir;
+  beforeAll(async () => {
+    tmpDir = await fsp.mkdtemp(path.join(os.tmpdir(), 'page-loader-'));
+    await loadPage(fullUrl, tmpDir);
+  });
+
   test('web page', async () => {
-    nock(siteUrl)
-      .get(sitePath)
-      .reply(200, originalPageContent);
-
-    resources.forEach((resource) => {
-      nock(siteUrl)
-        .get(resource.url)
-        .reply(200, resource.content);
-    });
-
-    const loaderFilepath = await loadPage(fullUrl, tmpDir);
-    const expectedFilepath = `${tmpDir}/${expectedFilename}`;
-
-    expect(nock.isDone()).toBeTruthy();
-    expect(loaderFilepath).toBe(expectedFilepath);
-
+    const loaderFilepath = path.join(tmpDir, expectedFilename);
     const loaderContent = await readFile(loaderFilepath);
     expect(prettifyHtml(loaderContent)).toBe(prettifyHtml(expectedPageContent));
   });
@@ -97,6 +97,18 @@ describe('page loader', () => {
   });
 });
 
-// afterAll(async () => {
-//   await fsp.rmdir(tmpDir, { recursive: true });
+// describe('negative cases', () => {
+//   test('http', async () => {
+//     const url = 'https://mail.ru';
+//     nock(url)
+//       .get('/')
+//       .replyWithError(`getaddrinfo ENOTFOUND ${url}`);
+
+//     return expect(loadPage(url)).rejects.toMatchObject({ message: `getaddrinfo ENOTFOUND ${url}` });
+//   });
 // });
+
+afterAll(async () => {
+  nock.enableNetConnect();
+  // await fsp.rmdir(tmpDir, { recursive: true });
+});
