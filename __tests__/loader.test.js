@@ -116,5 +116,4 @@ describe('negative cases', () => {
 
 afterAll(async () => {
   nock.enableNetConnect();
-  // await fsp.rmdir(tmpDir, { recursive: true });
 });
